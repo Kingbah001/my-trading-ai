@@ -6,6 +6,7 @@ load_dotenv()
 MT5_LOGIN = int(os.getenv("MT5_LOGIN", 0))
 MT5_PASSWORD = os.getenv("MT5_PASSWORD", "")
 MT5_SERVER = os.getenv("MT5_SERVER", "")
+MT5_PATH = os.getenv("MT5_PATH", "")  # Optional: specify MT5 terminal path
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
