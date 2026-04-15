@@ -30,31 +30,39 @@ def identify_order_block(df: pd.DataFrame, trend: str) -> List[Dict]:
     from .structure import detect_bos
 
     obs = []
+    if len(df) < 20:  # Need minimum data
+        return obs
+    
     body_size = (df['close'] - df['open']).abs()
     impulse_threshold = body_size.mean() * 1.5  # Strong move
     
     for i in range(10, len(df)):
-        if trend == "uptrend":
-            # Demand OB: Last red candle before green impulse
-            if (df['close'].iloc[i-1] < df['open'].iloc[i-1] and  # Red candle
-                df['close'].iloc[i] > df['open'].iloc[i] and body_size.iloc[i] > impulse_threshold):
-                obs.append({
-                    'type': 'demand',
-                    'top': max(df['high'].iloc[i-1], df['open'].iloc[i-1]),
-                    'bottom': min(df['low'].iloc[i-1], df['close'].iloc[i-1]),
-                    'time': df.index[i-1],
-                    'valid': detect_bos(df.iloc[:i], 'bull')  # BOS after
-                })
-        else:  # downtrend supply
-            if (df['close'].iloc[i-1] > df['open'].iloc[i-1] and  # Green
-                df['close'].iloc[i] < df['open'].iloc[i] and body_size.iloc[i] > impulse_threshold):
-                obs.append({
-                    'type': 'supply',
-                    'top': max(df['high'].iloc[i-1], df['open'].iloc[i-1]),
-                    'bottom': min(df['low'].iloc[i-1], df['close'].iloc[i-1]),
-                    'time': df.index[i-1],
-                    'valid': detect_bos(df.iloc[:i], 'bear')
-                })
+        try:
+            if trend == "uptrend":
+                # Demand OB: Last red candle before green impulse
+                if (df['close'].iloc[i-1] < df['open'].iloc[i-1] and  # Red candle
+                    df['close'].iloc[i] > df['open'].iloc[i] and body_size.iloc[i] > impulse_threshold):
+                    bos_check = detect_bos(df.iloc[:i], 'bull')
+                    obs.append({
+                        'type': 'demand',
+                        'top': max(df['high'].iloc[i-1], df['open'].iloc[i-1]),
+                        'bottom': min(df['low'].iloc[i-1], df['close'].iloc[i-1]),
+                        'time': df.index[i-1],
+                        'valid': bos_check
+                    })
+            else:  # downtrend supply
+                if (df['close'].iloc[i-1] > df['open'].iloc[i-1] and  # Green
+                    df['close'].iloc[i] < df['open'].iloc[i] and body_size.iloc[i] > impulse_threshold):
+                    bos_check = detect_bos(df.iloc[:i], 'bear')
+                    obs.append({
+                        'type': 'supply',
+                        'top': max(df['high'].iloc[i-1], df['open'].iloc[i-1]),
+                        'bottom': min(df['low'].iloc[i-1], df['close'].iloc[i-1]),
+                        'time': df.index[i-1],
+                        'valid': bos_check
+                    })
+        except Exception:
+            continue
     return obs[-5:]  # Recent valid A+ setups
 
 def validate_zone(ob: Dict, fvgs: List[Dict]) -> bool:
