@@ -8,8 +8,12 @@ def detect_bos(df: pd.DataFrame, direction: str, window: int = 5) -> bool:
     """Break of Structure: New high > prev swing high (bull BOS), low < prev low (bear)."""
     swings = get_recent_swings(df, window)
     if direction == "bull":
+        if swings["last_swing_high"] is None or swings["prev_swing_high"] is None:
+            return False
         return swings["last_swing_high"][1] > swings["prev_swing_high"][1]
     elif direction == "bear":
+        if swings["last_swing_low"] is None or swings["prev_swing_low"] is None:
+            return False
         return swings["last_swing_low"][1] < swings["prev_swing_low"][1]
     return False
 
@@ -17,6 +21,9 @@ def detect_mss(df: pd.DataFrame, htf_trend: str, window: int = 5) -> str:
     """Market Structure Shift / CHOCH: LTF breaks opposite to HTF."""
     swings = get_recent_swings(df, window)
     ltf_trend = swings["trend"]
+    
+    if ltf_trend == "neutral":
+        return "no_mss"
     
     if htf_trend == "uptrend" and ltf_trend == "downtrend":
         return "bear_mss"  # Potential reversal or confirmation fail
